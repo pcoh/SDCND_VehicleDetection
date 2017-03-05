@@ -62,12 +62,15 @@ The search area is restricted in vertical direction by ystart and ystop (to avoi
 
 To calculate the feature vector component stemming from the spacial binning and color histogram methods, a search window is  moved stepwise over the image (in a scanning motion) and for each location of the search window the corresponding image patch is extracted and the features are calculated and stuffed into the feature vector.
 
-Calculating the hog feature is handled slightly differently: To save time by avoiding duplicate computations, insted of extracting an image patch and then calculating the hog features, the order is reversed. Hog features are only calculated once (for each color channel) - for the entire image. Subsequently, the patch of the hog feature set corresponding to the location of the search window is extracted from the larger hog-feature set, reshaped into a 1D vecor and appended to the feature vector.
+Calculating the hog feature is handled slightly differently: To save time by avoiding duplicate computations, insted of extracting an image patch and then calculating the hog features, the order is reversed. Hog features are only calculated once (for each color channel) - for the entire image. Subsequently, the patch of the hog feature set corresponding to the location of the search window is extracted from the larger hog-feature set, reshaped into a 1D vecor and appended to the feature vector. 
+The scale and overlap were determined by trial and error and I ended up where I began.
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
-
+I restricted myself to 1 scale (1.5) but used hog-features based on all YCrCb channels as well as spatially binned color and histograms of color. This yielded raw results as shown below. It can be seen that there are still several situations with false positives. These were eliminated with strategies based on information gained from the sequencial processing of frames (see below)
+![alt text][image1]
+![alt text][image2]
+![alt text][image3]
 ![alt text][image4]
 ---
 
