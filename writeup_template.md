@@ -67,7 +67,8 @@ The scale and overlap were determined by trial and error and I ended up where I 
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-I restricted myself to 1 scale (1.5) but used hog-features based on all YCrCb channels as well as spatially binned color and histograms of color. This yielded raw results as shown below. It can be seen that there are still several situations with false positives. These were eliminated with strategies based on information gained from the sequencial processing of frames (see below)
+I restricted myself to 1 scale (1.5) but used hog-features based on all YCrCb channels as well as spatially binned color and histograms of color. This yielded raw results as shown below. It can be seen that there are still several situations with false positives. These were eliminated with strategies based on information gained from the sequencial processing of frames (see below).
+
 ![alt text][image1]
 ![alt text][image2]
 ![alt text][image3]
@@ -77,25 +78,30 @@ I restricted myself to 1 scale (1.5) but used hog-features based on all YCrCb ch
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_video_annotated.mp4)
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+To filter out **false positives**, I demand that the classifier has to indicate the presence of a car at a certain location in the image for at least a certrain number of times (controlled by variable "minHeatDuration") in a row before a box is drawn at this location. This is done as follows:
 
-### Here are six frames and their corresponding heatmaps:
+* For each video frame, I create a heatmap showing the locations of positive detections. 
+* The heatmap is capped at 1 - meaning that the maximum value each pixel can assume is 1
+* The heatmap is added to a 3D array which at all times stores the heatmaps of the previous n frames
+* The 3D heatmap is summed up along its 3rd dimension - effectively counting for each position in the remaining 2D array how often there was a positive detection made during the previous n video frames
+* All locations for which there was a positive detection during all of the previous n frames receive the value of 1.
+* All locations for which there was a negative detection at least once during the previous n frames receives a value of 0.
+* The resulting map is then fed to the *scipy.ndimage.measurements.label()* function to identify individual blobs.
+* The resulting information is then used to plot the boxes over the frame
 
-![alt text][image5]
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
+To deal with **false negatives** I demand that once a vehicle position has been established, it remains until no vehicle is identified at this position for at least a certain number of consecutive frames(controlled via the variable "persistence"). This is done as follows:
 
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
+* The locations covered by the drawn boxes (locations where I assumed to be a vehicle after accounting for false positives) are stored in a 3D array of depth "persistence". 
+* During each timestep the oldest slice of this array is dismissed and the latest matrix with the locations covered by the boxes is appended. 
+* The 3D map is summed up along its 3rd dimesion
+* Any location in the new 2D array that is not zero is assumed to still have a vehicle present
 
 
 ---
@@ -104,5 +110,10 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+One of the issues that I introduced through my method of dismissing false positives, is that there now effectively is a timelag of a few frames before a vehicle box is first drawn and before it is moved to a new location.
+Improving the accuracy of the classifier would allow for a smaller "minHeatDuration" and thus would help to reduce this time-lag. 
+
+The chosen strategy for eliminating false positives, also makes it impossible to positively detect vehicles that move through the frame at a fast pace (e.g. oncoming traffic, or vehicle veering from one side to the other.) This could be problematic specifically when using the detection to avoid collisions.
+
+I currently only seach at 1 scale. potenially searching at a second scale would improve the false-negative ratio (but might also be detrimental to the false positive ratio).
 

@@ -129,7 +129,7 @@ for frame in frames:
     persistHeat = np.zeros_like(persistHeatSum).astype(np.float) 
     # find locations that showed a vehicle during at least one of the previous m frames:
     persistHeat[persistHeatSum > 0] = 1 
-    # recird positions of currently detected vehicles for use during next timestep:
+    # store positions of currently detected vehicles for use during next timestep:
     lastHeat = heatLocSum
 
     # show vehicles where there was either a bounding box during all of the previous n frames or where there was a vehicle detected during at least 1 of the prevous m frames
